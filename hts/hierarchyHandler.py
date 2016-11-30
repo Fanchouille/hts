@@ -5,6 +5,7 @@ import numpy as np
 class cHierarchyHandler:
     def __init__(self, iHierarchyDf=None, iHierarchyOrder=None):
         """
+
         :param iHierarchyDf: a Df with the hierarchy
         :param iHierarchyOrder: a dict with names and level values : 0 is the base level (most granular)
         """
@@ -43,8 +44,10 @@ class cHierarchyHandler:
 
     def create_summing_matrix(self):
         """
+
         iHierachy is as DF with the hierarchy of data
-        level_0 is the base level (most granular level)
+        level 0 is the base level (most granular level)
+        :return: the summing matrix
         """
         lStructure = self.create_structure()
 

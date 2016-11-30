@@ -1,3 +1,5 @@
+## Simple script with useful functions to manipulate DFs
+
 import pandas as pd
 
 
@@ -45,19 +47,15 @@ def cross_join_from_dict(iFeatureDict):
     return oResultDf
 
 
-def split_tr_test(iDf, iDateCol, iDateThreshold, iGroupByCol=None):
+def split_tr_test(iDf, iDateCol, iDateThreshold):
     """
 
     :param iDf: dataframe with TS data
     :param iDateCol: date column
     :param iDateThreshold: data threshold to split training and testing sets
-    :param iGroupByCol: if needed a groupby col (in which case, return a grouped dataframe)
-    :return: training / testing sets (grouped if groupByCol is not none)
+    :return: training / testing sets
     """
-    if iGroupByCol is None:
-        oTrDf = iDf.loc[iDf[iDateCol] <= iDateThreshold, :]
-        oTsDf = iDf.loc[iDf[iDateCol] > iDateThreshold, :]
-    else:
-        oTrDf = iDf.loc[iDf[iDateCol] <= iDateThreshold, :].groupby(iGroupByCol)
-        oTsDf = iDf.loc[iDf[iDateCol] > iDateThreshold, :].groupby(iGroupByCol)
+    oTrDf = iDf.loc[iDf[iDateCol] <= iDateThreshold, :]
+    oTsDf = iDf.loc[iDf[iDateCol] > iDateThreshold, :]
+
     return oTrDf, oTsDf
