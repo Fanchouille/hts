@@ -13,7 +13,7 @@ data_log = pd.read_csv(data_path, delimiter=';')
 # Handle datetimes and create a filed with just Date (day only)
 data_log.loc[:, 'Date'] = pd.to_datetime(data_log.loc[:, 'Date'], format="%d/%m/%Y %H:%M")
 data_log.loc[:, 'DateDay'] = pd.to_datetime(data_log.loc[:, 'Date'].dt.date)
-# Add info of destination for each transporteur
+# Add info of destination for each carrier
 data_log.loc[:, 'Pays'] = 'France'
 data_log.loc[data_log['Transporteur'] == 'LPS', 'Pays'] = 'Suisse'
 data_log.loc[data_log['Transporteur'] == 'TAX', 'Pays'] = 'Belgique'
@@ -88,9 +88,18 @@ for level in revHierarchyOrder.keys():
         results_current_lvl.append(
             current_ts_df.loc[:, ['DateDay', revHierarchyOrder[level], 'NbColis', 'Forecast']])
 
-    results_level_dfs[level] = pd.concat(results_current_lvl).groupby(revHierarchyOrder[level])
+    results_level_dfs[level] = pd.concat(results_current_lvl)
 
+##################################################################################################################
+# USE OF HTS HERE
 ##################################################################################################################
 hts_optim = htsm.cHtsOptimizer(results_level_dfs, hierarchy, hierarchyOrder)
 
-print hts_optim.computeTopDownHistoricalProportions(iTsCol='NbColis')
+print hts_optim.mStructure
+
+# TOP DOWN APPROACH
+p1, p2 = hts_optim.computeTopDownHistoricalProportions(results_level_dfs, iTsCol='NbColis')
+td_res = hts_optim.computeTopDownForecasts(p1, '_TD_p1', iInitialForecastCol='Forecast')
+
+# BOTTOM - UP APPROACH
+bu_res = hts_optim.computeBottomUpForecasts('DateDay', iInitialForecastCol='Forecast')
