@@ -73,4 +73,4 @@ class cHierarchyHandler:
                     lIndices[col] = lNew_index
                     oSummingMatrix[lNew_index][lNew_index] = 1
 
-        return oSummingMatrix, lIndices
+        return oSummingMatrix

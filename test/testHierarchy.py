@@ -6,7 +6,6 @@ import tsUtils as tsu
 
 data_path = '../data/data_log.csv'
 
-
 # LOAD DATA
 data_log = pd.read_csv(data_path, delimiter=';')
 # Handle datetimes and create a filed with just Date (day only)
@@ -87,16 +86,17 @@ for level in revHierarchyOrder.keys():
 ##################################################################################################################
 # USE OF HTS HERE
 ##################################################################################################################
-hts_optim = htsm.cHtsOptimizer(results_level_dfs, hierarchy, hierarchyOrder)
-
-print hts_optim.mStructure
+hts_optim = htsm.cHtsOptimizer(results_level_dfs, 'Forecast', hierarchy, hierarchyOrder)
 
 # TOP DOWN APPROACH
 p1, p2 = hts_optim.computeTopDownHistoricalProportions(results_level_dfs, iTsCol='NbColis')
-td_res = hts_optim.computeTopDownForecasts(p1, '_TD_p1', iInitialForecastCol='Forecast')
+td_res = hts_optim.computeTopDownForecasts(p1, '_TD_p1')
 
 # BOTTOM - UP APPROACH
-bu_res = hts_optim.computeBottomUpForecasts('DateDay', iInitialForecastCol='Forecast')
+bu_res = hts_optim.computeBottomUpForecasts('DateDay')
 
 # MIDDLE OUT APPROACH
-mo_res = hts_optim.computeMiddleOutForecasts('DateDay', p1, iMidLevel=1, iPrefix='MO', iInitialForecastCol='Forecast')
+mo_res = hts_optim.computeMiddleOutForecasts('DateDay', p1, iMidLevel=1, iPrefix='MO')
+
+# OPTIMAL APPROACH WITH PSEUDO INVERSE OF SUMMING MATRIX
+oc_res = hts_optim.computeOptimalCombination(iPrefix='OC')
