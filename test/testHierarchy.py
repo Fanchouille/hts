@@ -3,7 +3,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 import hierarchyHandler as hh
 import htsMethods as htsm
-import tsutils as tsu
+import tsUtils as tsu
 
 data_path = '../data/data_log.csv'
 
@@ -28,12 +28,12 @@ revHierarchyOrder = dict((v, k) for k, v in hierarchyOrder.iteritems())
 # HIERARCHY HANDLER USE
 cHH = hh.cHierarchyHandler(hierarchy, hierarchyOrder)
 structure = cHH.create_structure()
-summing_matrix = cHH.create_summing_matrix()
+
 
 # CREATE A FULL DATASETS WITH NO "HOLES"
 lDateRange = pd.date_range(start=data_log.loc[:, 'DateDay'].min(), end=data_log.loc[:, 'DateDay'].max(), freq='D')
 featuresDict = {'DateDay': lDateRange, 'Transporteur': hierarchy.loc[:, 'Transporteur'].unique()}
-# Use tsutils lib to create full dataset
+# Use tsUtils lib to create full dataset
 fullDf = tsu.cross_join_from_dict(featuresDict)
 
 # Add info of destination for each transporteur
@@ -103,3 +103,6 @@ td_res = hts_optim.computeTopDownForecasts(p1, '_TD_p1', iInitialForecastCol='Fo
 
 # BOTTOM - UP APPROACH
 bu_res = hts_optim.computeBottomUpForecasts('DateDay', iInitialForecastCol='Forecast')
+
+# MIDDLE OUT APPROACH
+mo_res = hts_optim.computeMiddleOutForecasts('DateDay', p1, iMidLevel=1, iPrefix='MO', iInitialForecastCol='Forecast')

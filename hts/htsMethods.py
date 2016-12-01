@@ -51,6 +51,7 @@ class cHtsOptimizer(cHierarchyHandler):
         :param iInitialForecastCol: initial forecast column
         :return: same dict of Dfs with updated forecasts cols for the TD approach
         """
+        # Copy initial forecasts (forecast for highest level will be unchanged)
         oLevelDfDictResultsTD = self.mLevelDfDict.copy()
         lLevelsReversed = sorted(self.mStructure.keys(), reverse=True)
 
@@ -92,6 +93,7 @@ class cHtsOptimizer(cHierarchyHandler):
         :param iPrefix: prefix string to add to forecast col
         :return: same dict of Dfs with updated forecasts cols for the BU approach
         """
+        # Copy initial forecasts (forecast for lowest level will be unchanged)
         oLevelDfDictResultsBU = self.mLevelDfDict.copy()
         lLevelsSorted = sorted(self.mStructure.keys(), reverse=False)
 
@@ -121,3 +123,62 @@ class cHtsOptimizer(cHierarchyHandler):
                 oLevelDfDictResultsBU[level] = pd.concat(results_current_lvl)
 
         return oLevelDfDictResultsBU
+
+    def computeMiddleOutForecasts(self, iDateCol, iProp, iMidLevel, iPrefix, iInitialForecastCol='Forecast'):
+        # Copy initial forecasts (forecast for mid level will be unchanged)
+        oLevelDfDictResultsMO = self.mLevelDfDict.copy()
+
+        # Forecast for mid level is initial forecast (because it is MIDDLE OUT approach)
+        current_df = self.mLevelDfDict[iMidLevel].copy()
+        current_df.loc[:, iInitialForecastCol + "_" + iPrefix] = current_df.loc[:, iInitialForecastCol]
+        oLevelDfDictResultsMO[iMidLevel] = current_df
+
+        if len(self.mStructure.keys()) > 2:
+            # lower levels .... top-down starting from the middle.
+            levels_below = sorted([level for level in self.mStructure.keys() if (level <= iMidLevel)],
+                                  reverse=True)
+            levels_above = sorted([level for level in self.mStructure.keys() if (level > iMidLevel)],
+                                  reverse=False)
+
+            # lower level : TD approach
+            for level in levels_below:
+                if level > 0:
+                    results_current_lvl = []
+                    for col in self.mStructure[level].keys():
+                        l_new_TD_forecast_df = oLevelDfDictResultsMO[level].groupby(
+                            self.mRevHierarchyOrder[level]).get_group(
+                            col).copy()
+                        # Get the forecast for the +1 level
+                        for col1 in self.mStructure[level][col]:
+                            # Replace the forecast for the current level by forecast lvl+1 * proportion
+                            l_new_TD_forecast_df2 = oLevelDfDictResultsMO[level - 1].groupby(
+                                self.mRevHierarchyOrder[level - 1], as_index=False).get_group(
+                                col1).copy()
+                            l_new_TD_forecast_df2.loc[:,
+                            iInitialForecastCol + "_" + iPrefix] = l_new_TD_forecast_df.loc[:,
+                                                                   iInitialForecastCol + "_" + iPrefix].values * \
+                                                                   iProp[col][col1]
+                            results_current_lvl.append(l_new_TD_forecast_df2)
+
+                    oLevelDfDictResultsMO[level - 1] = pd.concat(results_current_lvl)
+
+            # higher levels : BU approach
+            for level in levels_above:
+                if level > 0:
+                    results_current_lvl = []
+                    for col in self.mStructure[level].keys():
+                        l_new_BU_forecast_df = oLevelDfDictResultsMO[level - 1].loc[
+                                               oLevelDfDictResultsMO[level - 1][
+                                                   self.mRevHierarchyOrder[level - 1]].isin(
+                                                   self.mStructure[level][col]), :]
+                        l_new_TD_forecast_df2 = oLevelDfDictResultsMO[level].groupby(
+                            self.mRevHierarchyOrder[level]).get_group(
+                            col).copy()
+                        # print l_new_BU_forecast_df.groupby(iDateCol)[iInitialForecastCol + "_" + iPrefix].sum().head()
+                        l_new_TD_forecast_df2.loc[:, iInitialForecastCol + "_" + iPrefix] = \
+                            l_new_BU_forecast_df.groupby(iDateCol)[iInitialForecastCol + "_" + iPrefix].sum().values
+                        results_current_lvl.append(l_new_TD_forecast_df2)
+
+                    oLevelDfDictResultsMO[level] = pd.concat(results_current_lvl)
+
+        return oLevelDfDictResultsMO
