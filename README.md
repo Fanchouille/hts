@@ -8,6 +8,5 @@ htsMethods : TOP DOWN allocation added
 TODO (bottom up / middle out / optimal)
 
 ## Commit 01/12/2016
-htsMethods : BOTTOM UP AND MIDDLE OUT allocations added 
-TODO (optimal)
+htsMethods : BOTTOM UP AND MIDDLE OUT AND OPTIMAL allocations added
 
