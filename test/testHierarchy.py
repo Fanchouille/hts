@@ -1,7 +1,6 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 
-import hierarchyHandler as hh
 import htsMethods as htsm
 import tsUtils as tsu
 
@@ -25,11 +24,6 @@ hierarchy = data_log.loc[:, ['Transporteur', 'Pays', 'All']].drop_duplicates()
 hierarchyOrder = {'Transporteur': 0, 'Pays': 1, 'All': 2}
 revHierarchyOrder = dict((v, k) for k, v in hierarchyOrder.iteritems())
 
-# HIERARCHY HANDLER USE
-cHH = hh.cHierarchyHandler(hierarchy, hierarchyOrder)
-structure = cHH.create_structure()
-
-
 # CREATE A FULL DATASETS WITH NO "HOLES"
 lDateRange = pd.date_range(start=data_log.loc[:, 'DateDay'].min(), end=data_log.loc[:, 'DateDay'].max(), freq='D')
 featuresDict = {'DateDay': lDateRange, 'Transporteur': hierarchy.loc[:, 'Transporteur'].unique()}
@@ -46,19 +40,19 @@ fullDf = pd.merge(fullDf, data_log.groupby(['DateDay', 'Transporteur'], as_index
 level_dfs = {}
 
 # Aggregate data for each level
-for level in cHH.mRevHierarchyOrder.keys():
-    level_dfs[level] = fullDf.groupby(['DateDay', cHH.mRevHierarchyOrder[level]], as_index=False)[['NbColis']].sum()
+for level in revHierarchyOrder.keys():
+    level_dfs[level] = fullDf.groupby(['DateDay', revHierarchyOrder[level]], as_index=False)[['NbColis']].sum()
 
 # Featurize data for each level
 featured_level_dfs = level_dfs.copy()
-for level in cHH.mRevHierarchyOrder.keys():
+for level in revHierarchyOrder.keys():
     for i in range(1, 5):
         # Add lagged features with data from Day-1, Day-2, .., Day-4
         featured_level_dfs[level] = pd.merge(featured_level_dfs[level], level_dfs[level].set_index('DateDay')
-                                             .groupby(cHH.mRevHierarchyOrder[level])[['NbColis']]
+                                             .groupby(revHierarchyOrder[level])[['NbColis']]
                                              .tshift(i, 'D')
                                              .rename(columns={'NbColis': 'NbColis_lag' + str(i)})
-                                             .reset_index(), on=['DateDay', cHH.mRevHierarchyOrder[level]], how='left') \
+                                             .reset_index(), on=['DateDay', revHierarchyOrder[level]], how='left') \
             .dropna()
 
 # Split date for training and testing sets
