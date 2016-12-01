@@ -86,17 +86,27 @@ for level in revHierarchyOrder.keys():
 ##################################################################################################################
 # USE OF HTS HERE
 ##################################################################################################################
-hts_optim = htsm.cHtsOptimizer(results_level_dfs, 'Forecast', hierarchy, hierarchyOrder)
+# Instantiate class : dict of Dfs, forecast and date columns and hierarchy !
+hts_optim = htsm.cHtsOptimizer(results_level_dfs, iInitialForecastCol='Forecast', iDateCol='DateDay',
+                               iHierarchyDf=hierarchy, iHierarchyOrder=hierarchyOrder)
 
 # TOP DOWN APPROACH
+# Here, we computes proportions with NbColis which are historical data : can use another similar dict of DFs
+# with the same structure to do compute props !
 p1, p2 = hts_optim.computeTopDownHistoricalProportions(results_level_dfs, iTsCol='NbColis')
-td_res = hts_optim.computeTopDownForecasts(p1, '_TD_p1')
+td_res_p1 = hts_optim.computeTopDownForecasts(p1, '_TD_p1')
+td_res_p2 = hts_optim.computeTopDownForecasts(p2, '_TD_p2')
+
 
 # BOTTOM - UP APPROACH
-bu_res = hts_optim.computeBottomUpForecasts('DateDay')
+bu_res = hts_optim.computeBottomUpForecasts()
 
 # MIDDLE OUT APPROACH
-mo_res = hts_optim.computeMiddleOutForecasts('DateDay', p1, iMidLevel=1, iPrefix='MO')
+mo_res_p1 = hts_optim.computeMiddleOutForecasts(p1, iMidLevel=1, iPrefix='MO_p1')
+mo_res_p2 = hts_optim.computeMiddleOutForecasts(p2, iMidLevel=1, iPrefix='MO_p2')
 
 # OPTIMAL APPROACH WITH PSEUDO INVERSE OF SUMMING MATRIX
 oc_res = hts_optim.computeOptimalCombination(iPrefix='OC')
+##################################################################################################################
+# END
+##################################################################################################################

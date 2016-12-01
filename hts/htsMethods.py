@@ -5,7 +5,8 @@ from hierarchyHandler import cHierarchyHandler
 
 
 class cHtsOptimizer(cHierarchyHandler):
-    def __init__(self, iLevelDfDict, iInitialForecastCol='Forecast', iHierarchyDf=None, iHierarchyOrder=None):
+    def __init__(self, iLevelDfDict, iInitialForecastCol='Forecast', iDateCol=None, iHierarchyDf=None,
+                 iHierarchyOrder=None):
         """
 
         :param iHierarchyDf: a Df with the hierarchy
@@ -15,6 +16,7 @@ class cHtsOptimizer(cHierarchyHandler):
         self.mStructure = self.create_structure()
         self.mLevelDfDict = iLevelDfDict
         self.mInitialForecastCol = iInitialForecastCol
+        self.mDateCol = iDateCol
 
     def computeTopDownHistoricalProportions(self, iLevelDfDictForProp, iTsCol=None):
         """
@@ -35,8 +37,7 @@ class cHtsOptimizer(cHierarchyHandler):
                             lYxx = iLevelDfDictForProp[level - 1].groupby(self.mRevHierarchyOrder[level - 1]).get_group(
                                 col1).loc[:, iTsCol].values
                             lYt = iLevelDfDictForProp[level].groupby(self.mRevHierarchyOrder[level]).get_group(col).loc[
-                                  :,
-                                  iTsCol].values
+                                  :, iTsCol].values
                             # Trick if there is a zero in lYt
                             oAvgHistProp[col][col1] = (lYxx[np.where(lYt > 0)] / lYt[np.where(lYt > 0)]).mean()
                             # Assume lYt is not zero mean
@@ -87,7 +88,7 @@ class cHtsOptimizer(cHierarchyHandler):
 
         return oLevelDfDictResultsTD
 
-    def computeBottomUpForecasts(self, iDateCol, iPrefix='BU'):
+    def computeBottomUpForecasts(self, iPrefix='BU'):
         """
         Bottom up forecasts : forecast are taken at lower levels and aggregated at upper ones
         :param iInitialForecastCol: initial forecast column
@@ -118,13 +119,14 @@ class cHtsOptimizer(cHierarchyHandler):
                         col).copy()
                     # print l_new_BU_forecast_df.groupby(iDateCol)[iInitialForecastCol + "_" + iPrefix].sum().head()
                     l_new_TD_forecast_df2.loc[:, self.mInitialForecastCol + "_" + iPrefix] = \
-                        l_new_BU_forecast_df.groupby(iDateCol)[self.mInitialForecastCol + "_" + iPrefix].sum().values
+                        l_new_BU_forecast_df.groupby(self.mDateCol)[
+                            self.mInitialForecastCol + "_" + iPrefix].sum().values
                     results_current_lvl.append(l_new_TD_forecast_df2)
                 oLevelDfDictResultsBU[level] = pd.concat(results_current_lvl)
 
         return oLevelDfDictResultsBU
 
-    def computeMiddleOutForecasts(self, iDateCol, iProp, iMidLevel, iPrefix='MO'):
+    def computeMiddleOutForecasts(self, iProp, iMidLevel, iPrefix='MO'):
         """
 
         :param iDateCol: string of column with date
@@ -182,7 +184,7 @@ class cHtsOptimizer(cHierarchyHandler):
                             self.mRevHierarchyOrder[level]).get_group(
                             col).copy()
                         l_new_TD_forecast_df2.loc[:, self.mInitialForecastCol + "_" + iPrefix] = \
-                            l_new_BU_forecast_df.groupby(iDateCol)[
+                            l_new_BU_forecast_df.groupby(self.mDateCol)[
                                 self.mInitialForecastCol + "_" + iPrefix].sum().values
                         results_current_lvl.append(l_new_TD_forecast_df2)
                     oLevelDfDictResultsMO[level] = pd.concat(results_current_lvl)
