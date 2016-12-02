@@ -80,7 +80,7 @@ hts_optim = htsm.cHtsOptimizer(results_level_dfs, iInitialForecastCol='Forecast'
                                iHierarchyDf=hierarchy, iHierarchyOrder=hierarchyOrder)
 
 # TOP DOWN APPROACH
-# Here, we computes proportions with NbColis which are historical data : can use another similar dict of DFs
+# Here, we compute proportions with NbColis which are historical data : can use another similar dict of DFs
 # with the same structure to do compute props !
 p1, p2 = hts_optim.computeTopDownHistoricalProportions(results_level_dfs, iTsCol='NbColis')
 td_res_p1 = hts_optim.computeTopDownForecasts(p1, '_TD_p1')

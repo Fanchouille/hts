@@ -39,7 +39,7 @@ class cHtsOptimizer(cHierarchyHandler):
                             lYt = iLevelDfDictForProp[level].groupby(self.mRevHierarchyOrder[level]).get_group(col).loc[
                                   :, iTsCol].values
                             # Trick if there is a zero in lYt
-                            oAvgHistProp[col][col1] = (lYxx[np.where(lYt > 0)] / lYt[np.where(lYt > 0)]).mean()
+                            oAvgHistProp[col][col1] = (lYxx[np.where(lYt != 0)] / lYt[np.where(lYt != 0)]).mean()
                             # Assume lYt is not zero mean
                             oPropHistAvg[col][col1] = lYxx.mean() / lYt.mean()
 
