@@ -21,26 +21,15 @@ data_log.loc[:, 'All'] = 'All'
 # BUILD HIERARCHY
 hierarchy = data_log.loc[:, ['Transporteur', 'Pays', 'All']].drop_duplicates()
 hierarchyOrder = {'Transporteur': 0, 'Pays': 1, 'All': 2}
+# Reversed hierarchy ( {0 : 'Transporteur', 1: 'Pays', 2: 'All'} )
 revHierarchyOrder = dict((v, k) for k, v in hierarchyOrder.iteritems())
 
 # CREATE A FULL DATASETS WITH NO "HOLES"
-lDateRange = pd.date_range(start=data_log.loc[:, 'DateDay'].min(), end=data_log.loc[:, 'DateDay'].max(), freq='D')
-featuresDict = {'DateDay': lDateRange, 'Transporteur': hierarchy.loc[:, 'Transporteur'].unique()}
-# Use tsUtils lib to create full dataset
-fullDf = tsu.cross_join_from_dict(featuresDict)
-
-# Add info of destination for each transporteur
-fullDf = pd.merge(fullDf, hierarchy, left_on='Transporteur', right_on='Transporteur', how='left')
-# Fill with data
-fullDf = pd.merge(fullDf, data_log.groupby(['DateDay', 'Transporteur'], as_index=False)[['NbColis']].sum(),
-                  on=['Transporteur', 'DateDay'], how='left').fillna(0)
+fullDf = tsu.create_full_df_with_hierarchy(data_log, hierarchy, hierarchyOrder, ['NbColis'], 'DateDay', 'D',
+                                           iFromDateCol=True)
 
 # BUILD DATASETS FOR EACH LEVELS
-level_dfs = {}
-
-# Aggregate data for each level
-for level in revHierarchyOrder.keys():
-    level_dfs[level] = fullDf.groupby(['DateDay', revHierarchyOrder[level]], as_index=False)[['NbColis']].sum()
+level_dfs = tsu.create_df_dict_for_each_level(fullDf, 'DateDay', ['NbColis'], hierarchyOrder)
 
 # Featurize data for each level
 featured_level_dfs = level_dfs.copy()
@@ -96,7 +85,6 @@ hts_optim = htsm.cHtsOptimizer(results_level_dfs, iInitialForecastCol='Forecast'
 p1, p2 = hts_optim.computeTopDownHistoricalProportions(results_level_dfs, iTsCol='NbColis')
 td_res_p1 = hts_optim.computeTopDownForecasts(p1, '_TD_p1')
 td_res_p2 = hts_optim.computeTopDownForecasts(p2, '_TD_p2')
-
 
 # BOTTOM - UP APPROACH
 bu_res = hts_optim.computeBottomUpForecasts()
